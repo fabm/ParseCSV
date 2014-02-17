@@ -48,6 +48,8 @@ public class InnerDto {
     @CSVCollumn(17)
     private String ultimo;
 
+... setters and getters
+
 }
 
 In Unit test
