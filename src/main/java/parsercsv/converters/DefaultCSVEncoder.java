@@ -13,7 +13,7 @@ public class DefaultCSVEncoder implements CSVEncoder {
     }
 
     @Override
-    public String encode(Field field, Object object) throws ConverterException {
+    public String encode(Field field, Object object) throws ConverterCSVException {
         if (object == null) return "";
 
         Class<?> type = field.getType();
@@ -38,7 +38,7 @@ public class DefaultCSVEncoder implements CSVEncoder {
             DatePattern datePatternAnnotation = field.getAnnotation(DatePattern.class);
             if (datePatternAnnotation == null) {
                 error = String.format(error, dateType.getStringType(), field.getName());
-                throw new ConverterException(String.format(error, field.getName()));
+                throw new ConverterCSVException(String.format(error, field.getName()));
             } else
                 return dateEncode(date, datePatternAnnotation.encode());
         }

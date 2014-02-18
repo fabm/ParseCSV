@@ -1,24 +1,25 @@
 package parsercsv;
 
 
-import parsercsv.converters.ConverterException;
+import parsercsv.converters.ConverterCSVException;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class DefaultParser implements Parser {
-    private int numberColumns;
+    private int recordSize;
 
-    public int getNumberColumns() {
-        return numberColumns;
-    }
-
-    public void setNumberColumns(int numberColumns) {
-        this.numberColumns = numberColumns;
+    public int getRecordSize() {
+        return recordSize;
     }
 
     @Override
-    public List<String> getList(String csv) throws ConverterException {
+    public void setRecordSize(int recordSize) {
+        this.recordSize = recordSize;
+    }
+
+    @Override
+    public List<String> getList(String csv) throws ConverterCSVException {
         ArrayList<String> strings = new ArrayList<String>();
 
         boolean innerString = false;
@@ -39,9 +40,9 @@ public class DefaultParser implements Parser {
                     innerString = true;
                 }
             } else if (c == ';' && !innerString) {
-                if (strings.size() > getNumberColumns()) {
+                if (strings.size() > getRecordSize()) {
                     String error = "Number of columns in csv ar superior than the annotated in %s parameter";
-                    throw new ConverterException(String.format(error, CSVRecord.class.getSimpleName()));
+                    throw new ConverterCSVException(String.format(error, CSVRecord.class.getSimpleName()));
                 }
                 strings.add(sb.toString());
                 sb = new StringBuilder();
@@ -52,4 +53,5 @@ public class DefaultParser implements Parser {
         strings.add(sb.toString());
         return strings;
     }
+
 }

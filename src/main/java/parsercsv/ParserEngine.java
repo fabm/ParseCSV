@@ -2,7 +2,7 @@ package parsercsv;
 
 import parsercsv.converters.CSVDecoder;
 import parsercsv.converters.CSVEncoder;
-import parsercsv.converters.ConverterException;
+import parsercsv.converters.ConverterCSVException;
 import parsercsv.validators.Validator;
 import parsercsv.validators.ValidatorAnotation;
 
@@ -13,47 +13,47 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public abstract class Marshaller {
+public abstract class ParserEngine {
     private static String accessibleError = "It's not possible access to field %s";
 
+    protected int recordSize;
     protected abstract CSVDecoder getDecoder();
 
     protected abstract CSVEncoder getEncoder();
 
     protected abstract Parser getParser();
 
-    protected abstract int getRecordSize();
-
-    protected CSVRecord getReccordAnnotation(Class<?> eClass) throws ConverterException, ConverterException {
+    protected void invoceReccordAnnotation(Class<?> eClass) throws ConverterCSVException, ConverterCSVException {
         CSVRecord recordAnnotation = eClass.getAnnotation(CSVRecord.class);
 
         if (recordAnnotation == null) {
             String error = "class %s does not annotated with CSVRecord";
-            throw new ConverterException(String.format(error, eClass));
+            throw new ConverterCSVException(String.format(error, eClass));
         }
-        return recordAnnotation;
+        recordSize = recordAnnotation.value();
+        getParser().setRecordSize(recordSize);
     }
 
-    public String decode(Object container) throws ConverterException {
+    public String decode(Object container) throws ConverterCSVException {
         if (container == null) {
-            throw new ConverterException("Impossible to decode a null object");
+            throw new ConverterCSVException("Impossible to decode a null object");
         }
         StringBuilder sb = new StringBuilder();
         Class<?> eClass = container.getClass();
 
-        CSVRecord recordAnnotation = getReccordAnnotation(eClass);
+        invoceReccordAnnotation(eClass);
 
         Map<Integer, MappedField> fieldMap = createFieldMap(eClass, container);
 
         Field field = null;
-        for (int i = 0; i < getRecordSize() - 1; i++) {
+        for (int i = 0; i < recordSize - 1; i++) {
             MappedField mappedField = fieldMap.get(i+1);
             if (mappedField != null) {
                 sb.append(decodeField(mappedField.field, mappedField.container));
             }
             sb.append(";");
         }
-        MappedField mappedField = fieldMap.get(getRecordSize());
+        MappedField mappedField = fieldMap.get(recordSize);
         if (mappedField != null) {
             sb.append(decodeField(mappedField.field, mappedField.container));
         }
@@ -61,27 +61,27 @@ public abstract class Marshaller {
         return sb.toString();
     }
 
-    protected Map<Integer, MappedField> createFieldMap(Class<?> eClass, Object container) throws ConverterException {
+    protected Map<Integer, MappedField> createFieldMap(Class<?> eClass, Object container) throws ConverterCSVException {
         HashMap<Integer, MappedField> fieldMap = new HashMap<Integer, MappedField>();
         return createFieldMap(eClass, fieldMap, container);
     }
 
     protected Map<Integer, MappedField> createFieldMap(Class<?> eClass, Map<Integer, MappedField> fieldMap, Object container)
-            throws ConverterException {
+            throws ConverterCSVException {
         for (Field field : eClass.getDeclaredFields()) {
             field.setAccessible(true);
             CSVCollumn csvCollumnAnnotation = field.getAnnotation(CSVCollumn.class);
             CSVEmbedded csvEmbeddedAnnotation = field.getAnnotation(CSVEmbedded.class);
 
             if (csvCollumnAnnotation != null && csvEmbeddedAnnotation != null) {
-                throw new ConverterException("The field %s can't be an enbedded and a column at the same time");
+                throw new ConverterCSVException("The field %s can't be an enbedded and a column at the same time");
             }
             if (csvCollumnAnnotation != null) {
-                if (csvCollumnAnnotation.value() > getRecordSize()) {
-                    throw new ConverterException(String.format(
+                if (csvCollumnAnnotation.value() > recordSize) {
+                    throw new ConverterCSVException(String.format(
                             "The reccord can only have %d " +
                                     "columns and the field %s have the position %d mapped",
-                            getRecordSize(),
+                            recordSize,
                             field.getName(),
                             csvCollumnAnnotation.value()
                     )
@@ -89,7 +89,7 @@ public abstract class Marshaller {
                 }
                 if (fieldMap.containsKey(csvCollumnAnnotation.value())) {
                     String error = "The position %d are mapped twice, in field %s and %s";
-                    throw new ConverterException(
+                    throw new ConverterCSVException(
                             String.format(
                                     error,
                                     csvCollumnAnnotation.value(),
@@ -107,20 +107,20 @@ public abstract class Marshaller {
                 try {
                     createFieldMap(field.getType(), fieldMap, field.get(container));
                 } catch (IllegalAccessException e) {
-                    throw new ConverterException(e);
+                    throw new ConverterCSVException(e);
                 }
             }
         }
         return fieldMap;
     }
 
-    private String decodeField(Field field, Object container) throws ConverterException {
+    private String decodeField(Field field, Object container) throws ConverterCSVException {
         field.setAccessible(true);
         try {
             Object object = field.get(container);
             for (Validator validator : getValidators(field)) {
                 if (!validator.isValid(object)) {
-                    throw new ConverterException(
+                    throw new ConverterCSVException(
                             validator.getErrorMessage(
                                     Validator.Action.decode,
                                     field.getName()
@@ -130,7 +130,7 @@ public abstract class Marshaller {
             }
             return getEncoder().encode(field, field.get(container));
         } catch (IllegalAccessException e) {
-            throw new ConverterException(String.format(accessibleError, field.getName()), e);
+            throw new ConverterCSVException(String.format(accessibleError, field.getName()), e);
         }
     }
 
@@ -141,26 +141,26 @@ public abstract class Marshaller {
      * @param eClass
      * @param <T>
      * @return
-     * @throws ConverterException
+     * @throws parsercsv.converters.ConverterCSVException
      */
-    public <T> T encode(String csv, Class<T> eClass) throws ConverterException {
-        CSVRecord recordAnnotation = getReccordAnnotation(eClass);
+    public <T> T encode(String csv, Class<T> eClass) throws ConverterCSVException {
+        invoceReccordAnnotation(eClass);
 
-        if (recordAnnotation.value() < 0) {
+        if (recordSize < 0) {
             String error = "Quantity of columns must be positive, not %d";
-            throw new ConverterException(String.format(error, recordAnnotation.value()));
+            throw new ConverterCSVException(String.format(error, recordSize));
         }
 
 
         List<String> strings = getParser().getList(csv);
 
 
-        if (strings.size() != getRecordSize()) {
-            throw new ConverterException(
+        if (strings.size() != recordSize) {
+            throw new ConverterCSVException(
                     String.format(
                             "The number of columns in csv must be %d like was declared in" +
                                     " annotation %s not %d",
-                            recordAnnotation.value(),
+                            recordSize,
                             CSVRecord.class.getSimpleName(),
                             strings.size()
                     )
@@ -186,9 +186,9 @@ public abstract class Marshaller {
                         validator.annotationSource(annotation);
                         validators.add(validator);
                     } catch (InstantiationException e) {
-                        new ConverterException("It's not possible instantite the validator", e);
+                        new ConverterCSVException("It's not possible instantite the validator", e);
                     } catch (IllegalAccessException e) {
-                        new ConverterException(accessibleError, e);
+                        new ConverterCSVException(accessibleError, e);
                     }
                 }
             }
@@ -196,7 +196,7 @@ public abstract class Marshaller {
         return validators;
     }
 
-    protected Object encodeFields(Class<?> eClass, List<String> strings) throws ConverterException {
+    protected Object encodeFields(Class<?> eClass, List<String> strings) throws ConverterCSVException {
         boolean returnNull = true;
         try {
             Object instance = eClass.newInstance();
@@ -204,13 +204,13 @@ public abstract class Marshaller {
                 CSVCollumn csvCollumnAnnotation = field.getAnnotation(CSVCollumn.class);
                 CSVEmbedded csvEmbeddedAnnotation = field.getAnnotation(CSVEmbedded.class);
                 if (csvCollumnAnnotation != null) {
-                    if(csvCollumnAnnotation.value()>getRecordSize()){
+                    if(csvCollumnAnnotation.value()> recordSize){
                         String error = "The number of column must be between [1;%d], " +
                                 "the field \"%s\" have position %d";
-                        throw new ConverterException(
+                        throw new ConverterCSVException(
                                 String.format(
                                         error,
-                                        getRecordSize(),
+                                        recordSize,
                                         field.getName(),
                                         csvCollumnAnnotation.value()
                                 ));
@@ -228,16 +228,16 @@ public abstract class Marshaller {
             }
             return instance;
         } catch (InstantiationException e) {
-            throw new ConverterException(e);
+            throw new ConverterCSVException(e);
         } catch (IllegalAccessException e) {
-            throw new ConverterException(e);
+            throw new ConverterCSVException(e);
         }
     }
 
-    private void encodeField(Field field, String string, Object container) throws ConverterException {
+    private void encodeField(Field field, String string, Object container) throws ConverterCSVException {
         for (Validator validator : getValidators(field)) {
             if (!validator.isValid(string)) {
-                throw new ConverterException(
+                throw new ConverterCSVException(
                         validator.getErrorMessage(
                                 Validator.Action.encode,
                                 field.getName()
@@ -252,7 +252,7 @@ public abstract class Marshaller {
         try {
             field.set(container, converted);
         } catch (IllegalAccessException e) {
-            throw new ConverterException(accessibleError, e);
+            throw new ConverterCSVException(accessibleError, e);
         }
     }
 

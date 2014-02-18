@@ -5,19 +5,19 @@ import org.junit.Test;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
-import java.util.List;
 
-import parsercsv.converters.ConverterException;
+import parsercsv.DefaultPECSV;
+import parsercsv.converters.ConverterCSVException;
 
-public class MarshallerCSVTest {
+public class ParserCSVTest {
 
     @Test
-    public void testCSV() throws ConverterException {
+    public void testCSV() throws ConverterCSVException {
         String csv="primeira;segunda;5;SEGUNDO;in;vi1;vi2;20140101;;;;;;;;;ultima";
 
-        MyCSVMarshaller myCSVMarshaller = new MyCSVMarshaller();
+        DefaultPECSV defaultPECSV = new DefaultPECSV();
 
-        DtoTest dtoTest = myCSVMarshaller.encode(csv, DtoTest.class);
+        DtoTest dtoTest = defaultPECSV.encode(csv, DtoTest.class);
 
         Assert.assertEquals(dtoTest.getTest1(),"primeira");
         Assert.assertEquals(dtoTest.getTeste2(),"segunda");
@@ -28,6 +28,6 @@ public class MarshallerCSVTest {
         Assert.assertEquals(dtoTest.getInnerDto().getTesteInner1(),"vi1");
         Assert.assertEquals(dtoTest.getInnerDto().getTesteInner2(),"vi2");
 
-        Assert.assertEquals(myCSVMarshaller.decode(dtoTest),csv);
+        Assert.assertEquals(defaultPECSV.decode(dtoTest),csv);
     }
 }
