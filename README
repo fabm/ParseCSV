@@ -1,1 +1,78 @@
-This file was created by IntelliJ IDEA 12.1.4 for binding GitHub repository
+Library to parse from a String CSV to a annotated object and vice-versa.
+=========================================================================
+
+
+Class example:
+
+@CSVRecord(17)
+public class DtoTest {
+
+    @CSVCollumn(1)
+    private String test1;
+
+    @Validator.MaxLength(9)
+    @Validator.MinLength(3)
+    @CSVCollumn(2)
+    private String teste2;
+    @CSVCollumn(3)
+    private int teste3;
+    @CSVCollumn(4)
+    private TresPrimeiros teste4;
+    @Validator.Required
+    @CSVCollumn(5)
+    private String teste5;
+    @CSVEmbedded
+    private InnerDto innerDto;
+    @DatePattern(
+            encode = ConverterUtils.DATE_PATTERN_ENCODE,
+            decode = ConverterUtils.DATE_PATTERN_ENCODE
+    )
+    @CSVCollumn(8)
+    private Date teste6;
+    @CSVCollumn(9)
+    private String teste7;
+
+... setters and getters
+
+}
+
+
+public class InnerDto {
+
+    @CSVCollumn(6)
+    private String testeInner1;
+
+    @CSVCollumn(7)
+    private String testeInner2;
+
+    @CSVCollumn(17)
+    private String ultimo;
+
+... setters and getters
+
+}
+
+In Unit test
+
+    @Test
+    public void testCSV() throws ConverterException {
+        String csv="primeira;segunda;5;SEGUNDO;in;vi1;vi2;20140101;;;;;;;;;ultima";
+
+        MyCSVMarshaller myCSVMarshaller = new MyCSVMarshaller();
+
+        DtoTest dtoTest = myCSVMarshaller.encode(csv, DtoTest.class);
+
+        Assert.assertEquals(dtoTest.getTest1(),"primeira");
+        Assert.assertEquals(dtoTest.getTeste2(),"segunda");
+        Assert.assertEquals(dtoTest.getTeste3(),5);
+        Assert.assertEquals(dtoTest.getTeste4(), TresPrimeiros.SEGUNDO);
+        Assert.assertEquals(dtoTest.getTeste6(), new GregorianCalendar(2014, Calendar.JANUARY, 01).getTime());
+
+        Assert.assertEquals(dtoTest.getInnerDto().getTesteInner1(),"vi1");
+        Assert.assertEquals(dtoTest.getInnerDto().getTesteInner2(),"vi2");
+
+        Assert.assertEquals(myCSVMarshaller.decode(dtoTest),csv);
+    }
+    
+    I need to update with documentation and I will accept suggestions to improvements.
+    :)
