@@ -2,11 +2,11 @@ package parsercsv.validators;
 
 import java.lang.annotation.*;
 
-public interface Validator {
+public interface Validator<T extends Annotation> {
     enum Action{
         encode,decode;
     }
-    void annotationSource(Annotation annotation);
+    void annotationSource(T annotation);
     boolean isValid(String string);
     boolean isValid(Object object);
     String getErrorMessage(Action action, String fieldName);

@@ -1,15 +1,12 @@
 package parsercsv.validators;
 
-import java.lang.annotation.Annotation;
-
-public class MinLengthValidation implements Validator{
+public class MinLengthValidation implements Validator<Validator.MinLength>{
     private int min;
     private String value;
 
     @Override
-    public void annotationSource(Annotation annotation) {
-        MinLength aMinLength = (MinLength) annotation;
-        min = aMinLength.value();
+    public void annotationSource(MinLength annotation) {
+        min = annotation.value();
     }
 
     @Override

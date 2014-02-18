@@ -1,16 +1,13 @@
 package parsercsv.validators;
 
-import java.lang.annotation.Annotation;
-
-public class MaxLengthValidation implements Validator {
+public class MaxLengthValidation implements Validator<Validator.MaxLength> {
 
     private int max;
     private String value;
 
     @Override
-    public void annotationSource(Annotation annotation) {
-        MaxLength vMaxLength = (MaxLength) annotation;
-        max = vMaxLength.value();
+    public void annotationSource(MaxLength annotation) {
+        max = annotation.value();
     }
 
     @Override

@@ -9,7 +9,7 @@ public class DefaultCSVDecoder implements CSVDecoder {
 
     @Override
     public Object decode(String string, Field field) throws ConverterCSVException {
-        Class<?> type = field.getType();
+        Class type = field.getType();
 
         if(string.isEmpty())
             return null;
@@ -41,8 +41,7 @@ public class DefaultCSVDecoder implements CSVDecoder {
             }
         }
         if(Enum.class.isAssignableFrom(type)){
-            Class<Enum> classEnum = (Class<Enum>) type;
-            return Enum.valueOf(classEnum,string);
+            return Enum.valueOf(type, string);
         }
 
         throw new ConverterCSVException(String.format("Type %s unexpected",type.getName()));

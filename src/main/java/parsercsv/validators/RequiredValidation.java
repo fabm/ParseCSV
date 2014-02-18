@@ -2,10 +2,11 @@ package parsercsv.validators;
 
 import java.lang.annotation.Annotation;
 
-public class RequiredValidation implements Validator{
-    @Override
-    public void annotationSource(Annotation annotation) {
+public class RequiredValidation implements Validator<Validator.Required>{
 
+    @Override
+    public void annotationSource(Required annotation) {
+        //its no necessary
     }
 
     @Override

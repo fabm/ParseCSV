@@ -1,21 +1,20 @@
 package parsercsv;
 
-import parsercsv.CSVRecord;
-import parsercsv.DefaultParser;
-import parsercsv.ParserEngine;
-import parsercsv.Parser;
 import parsercsv.converters.*;
 
+/**
+ * Default parser engine CSV
+ */
 public class DefaultPECSV extends ParserEngine {
 
     private CSVDecoder decoder;
     private CSVEncoder encoder;
-    private DefaultParser parser;
+    private Parser parser;
 
     public DefaultPECSV() {
         this.decoder = new DefaultCSVDecoder();
         this.encoder = new DefaultCSVEncoder();
-        this.parser = new DefaultParser();
+        this.parser = new SimpleParser();
     }
 
     @Override
