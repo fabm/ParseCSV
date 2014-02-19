@@ -1,5 +1,4 @@
-Library to parse from a String CSV to a annotated object and vice-versa.
-=========================================================================
+#Library to parse from a String CSV to a annotated object and vice-versa.
 
 
 Class example:
